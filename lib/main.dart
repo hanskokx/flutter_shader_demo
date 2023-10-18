@@ -1,13 +1,35 @@
+// import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+// import 'package:window_manager/window_manager.dart';
 
 late FragmentProgram fragmentProgram;
 
 void main() async {
   fragmentProgram = await FragmentProgram.fromAsset(
-    'assets/shaders/my_shader.frag',
+    // 'assets/shaders/my_shader.frag',
+    'assets/shaders/starfield.frag',
   );
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // if (Platform.isWindows) {
+  //   await windowManager.ensureInitialized();
+
+  //   WindowOptions windowOptions = const WindowOptions(
+  //     size: Size(800, 600),
+  //     center: true,
+  //     backgroundColor: Colors.transparent,
+  //     skipTaskbar: false,
+  //     titleBarStyle: TitleBarStyle.hidden,
+  //   );
+  //   windowManager.waitUntilReadyToShow(windowOptions, () async {
+  //     await windowManager.setAsFrameless();
+  //     await windowManager.show();
+  //     await windowManager.focus();
+  //   });
+  // }
 
   runApp(const MainApp());
 }
@@ -29,17 +51,20 @@ class _MainAppState extends State<MainApp> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final FragmentShader shader = fragmentProgram.fragmentShader();
-    return AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          return CustomPaint(
-            painter: MyPainter(
-              // color: const Color.fromRGBO(64, 224, 208, 0.4),
-              shader: shader,
-              time: _elapsedTimeInSeconds,
-            ),
-          );
-        });
+    return ClipPath(
+      // clipper: TrapeziumClipper(),
+      child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, _) {
+            return CustomPaint(
+              painter: MyPainter(
+                // color: const Color.fromRGBO(64, 224, 208, 0.4),
+                shader: shader,
+                time: _elapsedTimeInSeconds,
+              ),
+            );
+          }),
+    );
   }
 
   @override
@@ -92,4 +117,19 @@ class MyPainter extends CustomPainter {
   @override
   bool shouldRepaint(MyPainter oldDelegate) =>
       color != oldDelegate.color || time != oldDelegate.time;
+}
+
+class TrapeziumClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.lineTo(size.width * 2 / 3, 0.0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0.0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(TrapeziumClipper oldClipper) => false;
 }
